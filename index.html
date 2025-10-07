@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -51,20 +52,33 @@
         <h1>Lost & Found</h1>
         <p>Items found on campus</p>
     </header>
+
     <div id="items-container"></div>
 
     <script>
-        const sheetUrl = '
+        const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQzVAX5LQUThAu9iZqUhOOg_qrtQqm9QNiuKswkhIhh3D1mj0VLdszy58IezAStp2dTMauciFxjEVJe/pub?output=csv';
 
+        // Function to safely parse CSV rows (handles commas inside quotes)
+        function parseCSVRow(row) {
+            const regex = /(?:\"([^\"]*)\")|([^,]+)/g;
+            const result = [];
+            let match;
+            while ((match = regex.exec(row)) !== null) {
+                result.push(match[1] || match[2]);
+            }
+            return result;
+        }
 
-https://docs.google.com/spreadsheets/d/e/2PACX-1vQzVAX5LQUThAu9iZqUhOOg_qrtQqm9QNiuKswkhIhh3D1mj0VLdszy58IezAStp2dTMauciFxjEVJe/pub?output=csv';
         fetch(sheetUrl)
             .then(response => response.text())
             .then(data => {
                 const rows = data.split('\n').slice(1); // Skip header row
                 const container = document.getElementById('items-container');
+
                 rows.forEach(row => {
-                    const [itemName, dateFound, location, description, imageUrl, claimed] = row.split(',');
+                    if (!row.trim()) return; // Skip empty rows
+                    const [itemName, dateFound, location, description, imageUrl, claimed] = parseCSVRow(row);
+
                     if (itemName && imageUrl) {
                         const itemDiv = document.createElement('div');
                         itemDiv.classList.add('item');
@@ -74,7 +88,7 @@ https://docs.google.com/spreadsheets/d/e/2PACX-1vQzVAX5LQUThAu9iZqUhOOg_qrtQqm9Q
                             <p><strong>Location:</strong> ${location}</p>
                             <p><strong>Description:</strong> ${description}</p>
                             <img src="${imageUrl}" alt="${itemName}">
-                            <a href="mailto:school@example.com?subject=Claiming ${itemName}" class="claim-button">Visit school to claim</a>
+                            <a href="mailto:school@example.com?subject=Claiming ${encodeURIComponent(itemName)}" class="claim-button">Visit school to claim</a>
                         `;
                         container.appendChild(itemDiv);
                     }
